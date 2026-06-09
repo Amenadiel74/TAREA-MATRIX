@@ -256,6 +256,3 @@ El tablero y las reglas deben ser configurables sin recompilar el codigo:
 - Tamano del tablero (N × M)
 - Numero de Agentes
 - Numero de telefonos
-- Posicion inicial de Neo, Agentes, telefonos y muros
-- Algoritmo de busqueda a usar
-- Velocidad de movimiento de cada entidad (relevante en concurrencia)
