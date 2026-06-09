@@ -16,6 +16,7 @@ public class TheMatrixEscapeApplication {
 
     private static final GameEngine engine = new GameEngine();
     private static final Scanner scanner = new Scanner(System.in);
+    private static GameConfig lastConfig;
 
     private static final String RESET      = "\u001B[0m";
     private static final String GREEN      = "\u001B[92m";
@@ -33,8 +34,12 @@ public class TheMatrixEscapeApplication {
      */
     public static void main(String[] args) {
         welcome();
-        GameConfig config = askConfig();
-        engine.start(config);
+        lastConfig = askConfig();
+        startSim();
+    }
+
+    private static void startSim() {
+        engine.start(lastConfig);
         autoSim();
     }
 
@@ -83,7 +88,7 @@ public class TheMatrixEscapeApplication {
     /**
      * Bucle de simulacion automatica: Neo se mueve solo con A* hacia el telefono
      * mas cercano, los Agentes persiguen con BFS, hasta que el juego termina.
-     * Cada turno tiene una pausa de 400ms para visualizar el movimiento.
+     * Cada turno tiene una pausa de 800ms para visualizar el movimiento.
      */
     private static void autoSim() {
         sleep(1000);
@@ -109,7 +114,7 @@ public class TheMatrixEscapeApplication {
                 return;
             }
 
-            sleep(400);
+            sleep(800);
         }
     }
 
@@ -200,8 +205,11 @@ public class TheMatrixEscapeApplication {
         System.out.println(resultStatus.equals("NEO_WINS")
             ? BOLD + GREEN + "\n  NEO ESCAPO" + RESET
             : BOLD + RED + "\n  AGENTES GANARON" + RESET);
-        System.out.print(YELLOW + "Otra? (s/n): " + RESET);
-        if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
+        System.out.print(YELLOW + "Otra? (s=repetir config | n=salir | c=cambiar config): " + RESET);
+        String input = scanner.nextLine().trim().toLowerCase();
+        if (input.equals("s")) {
+            startSim();
+        } else if (input.equals("c")) {
             main(new String[]{});
         } else {
             System.out.println(CYAN + "Gracias." + RESET);

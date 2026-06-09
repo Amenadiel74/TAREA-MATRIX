@@ -189,3 +189,73 @@ En `GameEngine.moveSingleAgent()`, antes de mover un agente se verifica que la c
 | BFS       | Agentes   | Camino mas corto, sin heuristicas  |
 
 Ambos soportan movimiento en 8 direcciones y evitan muros. A* incluye telefonos como transitables; BFS los excluye.
+
+---
+
+## Contexto del Proyecto
+
+### Descripcion General
+
+Es un juego de simulacion basado en el universo de The Matrix, implementado sobre un tablero bidimensional (matriz de N×M celdas de tamaño configurable). El juego modela una persecucion dentro de la simulacion: **Neo debe escapar hacia un telefono antes de ser capturado por los Agentes**.
+
+### Entidades del Tablero
+
+| Simbolo | Entidad | Rol |
+|---|---|---|
+| `N` | Neo | Jugador / protagonista |
+| `A` | Agente | Perseguidor autonomo (IA) |
+| `T` | Telefono | Portal de escape (objetivo) |
+| `#` | Muro | Obstaculo infranqueable |
+
+**Neo (`N`)** es el unico personaje controlado (ya sea por el jugador o por una IA defensiva). Su objetivo es alcanzar el telefono mas cercano sin ser capturado. Representa al hacker que intenta escapar de la simulacion.
+
+**Agentes (`A`)** son entidades autonomas controladas por el sistema. Pueden existir **uno o varios simultaneamente** en el tablero. Cada Agente opera de forma independiente mediante su propio hilo de ejecucion, y su unico objetivo es interceptar a Neo. Son la amenaza principal del juego.
+
+**Telefonos (`T`)** son los puntos de salida del mundo virtual. Pueden existir **uno o varios** en el tablero. Neo debe llegar a cualquiera de ellos para ganar. Si hay multiples telefonos, el sistema (o Neo) debe identificar el mas accesible segun la situacion actual.
+
+**Muros (`#`)** son celdas bloqueadas que ninguna entidad puede atravesar. Definen la topografia del laberinto y condicionan las rutas posibles tanto para Neo como para los Agentes.
+
+### Mecanica Central
+
+El juego es esencialmente una **carrera con obstaculos**: Neo intenta llegar al telefono mas cercano mientras los Agentes calculan rutas para interceptarlo. La partida termina en dos condiciones:
+
+- **Neo gana:** llega a una celda `T` antes de ser atrapado.
+- **Los Agentes ganan:** uno de ellos ocupa la misma celda que Neo.
+
+### Concurrencia y Manejo de Hilos
+
+Este es el componente tecnico mas importante del proyecto. Cada Agente corre en su **propio hilo de ejecucion independiente**, lo que significa que varios Agentes pueden calcular y mover simultaneamente. Esto introduce desafios reales de programacion concurrente:
+
+- **Memoria compartida:** el tablero es un recurso compartido entre todos los hilos (Neo + Agentes). Se requieren mecanismos de sincronizacion (mutex, semaforos, locks) para evitar condiciones de carrera al leer/escribir posiciones.
+- **Coordinacion sin centralizacion:** los Agentes no se "comunican" entre si explicitamente, pero comparten el estado del tablero, lo que genera una persecucion distribuida naturalmente.
+- **Actualizacion del estado:** cada vez que un Agente o Neo se mueve, el tablero debe actualizarse de forma segura para que todos los hilos vean el estado correcto.
+
+### Algoritmos de Busqueda
+
+Cada Agente usa un algoritmo de busqueda de caminos para perseguir a Neo. Las opciones viables son:
+
+- **BFS (Busqueda en Anchura):** garantiza el camino mas corto en grafos sin pesos. Simple y efectivo para tableros uniformes.
+- **Dijkstra:** util si en el futuro se anaden celdas con costos de movimiento distintos.
+- **A\* (A-estrella):** el mas eficiente para este escenario. Combina distancia recorrida con una heuristica (por ejemplo, distancia Manhattan hacia Neo), lo que lo hace mas inteligente y rapido que BFS en tableros grandes.
+
+> Un detalle importante: como Neo se mueve, los Agentes deben **recalcular su ruta periodicamente**, no solo al inicio. Esto hace que el algoritmo deba ejecutarse de forma repetida y eficiente.
+
+### Patrones de Diseno Aplicables
+
+Dado que el proyecto involucra concurrencia, entidades autonomas y un estado compartido, algunos patrones relevantes son:
+
+- **Observer / Event-driven:** el tablero notifica a los hilos cuando el estado cambia (Neo se movio, un Agente llego a su destino, etc.).
+- **Strategy:** permite intercambiar el algoritmo de busqueda de cada Agente en tiempo de ejecucion (un Agente usa BFS, otro usa A\*, etc.).
+- **Singleton:** para garantizar que el tablero sea una unica instancia compartida.
+- **Thread Pool:** en lugar de crear un hilo nuevo por Agente cada turno, se puede mantener un pool de hilos reutilizables.
+
+### Configurabilidad del Sistema
+
+El tablero y las reglas deben ser configurables sin recompilar el codigo:
+
+- Tamano del tablero (N × M)
+- Numero de Agentes
+- Numero de telefonos
+- Posicion inicial de Neo, Agentes, telefonos y muros
+- Algoritmo de busqueda a usar
+- Velocidad de movimiento de cada entidad (relevante en concurrencia)
