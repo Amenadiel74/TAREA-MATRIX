@@ -1,23 +1,23 @@
-# MATRIX - EL ESCAPE
+# MATRIX - THE ESCAPE
 
-**Autor:** STIVEN ESNEIDER PARDO GUTIERREZ
-
----
-
-## Descripcion
-
-Simulacion por consola inspirada en The Matrix. Neo debe escapar a un telefono antes de que los Agentes lo atrapen. El sistema controla todo automaticamente: Neo usa el algoritmo A* para buscar la ruta optima hacia el telefono mas cercano, mientras los Agentes usan BFS para perseguirlo en paralelo, cada uno en su propio hilo de ejecucion.
+**Author:** STIVEN ESNEIDER PARDO GUTIERREZ
 
 ---
 
-## Requisitos
+## Description
 
-- **Java 21** o superior
-- **Maven 3.9+** (o usar el wrapper `mvnw`/`mvnw.cmd` incluido)
+A console-based simulation inspired by The Matrix. Neo must escape to a telephone before the Agents catch him. The system controls everything automatically: Neo uses the A* algorithm to find the optimal path to the nearest telephone, while the Agents use BFS to pursue him in parallel, each running on their own thread of execution.
 
 ---
 
-## Guia de ejecucion
+## Requirements
+
+- **Java 21** or higher
+- **Maven 3.9+** (or use the included `mvnw`/`mvnw.cmd` wrapper)
+
+---
+
+## Execution Guide
 
 ### Windows
 
@@ -25,7 +25,7 @@ Simulacion por consola inspirada en The Matrix. Neo debe escapar a un telefono a
 run.bat
 ```
 
-O manualmente:
+Or manually:
 
 ```batch
 mvnw.cmd compile -q
@@ -39,18 +39,18 @@ java -cp "target\classes" com.the.matrix.arsw.The_matrix_escape.TheMatrixEscapeA
 java -cp "target/classes" com.the.matrix.arsw.The_matrix_escape.TheMatrixEscapeApplication
 ```
 
-En ambos casos el programa pedira:
+In either case, the program will request:
 
-1. **Filas / Columnas** del tablero (default 8x8)
-2. **Cantidad de Agentes** (default 2)
-3. **Cantidad de Telefonos** (default 1)
-4. **Cantidad de Muros** (default 10)
+1. **Rows / Columns** of the board (default 8x8)
+2. **Number of Agents** (default 2)
+3. **Number of Telephones** (default 1)
+4. **Number of Walls** (default 10)
 
-Luego la simulacion se ejecuta automaticamente mostrando turno por turno el tablero coloreado con ANSI, hasta que Neo gane (llegue al telefono) o los Agentes ganen (lo atrapen).
+Then the simulation runs automatically, displaying the board colored with ANSI turn-by-turn until Neo wins (reaches the telephone) or the Agents win (catch him).
 
-Al final preguntara si desea ejecutar otra simulacion.
+At the end, it will ask if you want to run another simulation.
 
-### Compilar y ejecutar tests
+### Compile and Run Tests
 
 ```bash
 mvn test
@@ -58,201 +58,201 @@ mvn test
 
 ---
 
-## Entidades del tablero
+## Board Entities
 
-| Simbolo | Entidad   | Rol                              |
-|---------|-----------|----------------------------------|
-| `N`     | Neo       | Protagonista (controlado por A*) |
-| `A`     | Agente    | Perseguidor autonomo (BFS)       |
-| `T`     | Telefono  | Meta de Neo                      |
-| `#`     | Muro      | Obstaculo intransitable          |
-| `.`     | Vacio     | Celda transitable                |
+| Symbol | Entity   | Role                              |
+|--------|----------|-----------------------------------|
+| `N`    | Neo      | Protagonist (controlled by A*)   |
+| `A`    | Agent    | Autonomous pursuer (BFS)          |
+| `T`    | Telephone| Neo's goal                        |
+| `#`    | Wall     | Impassable obstacle              |
+| `.`    | Empty    | Walkable cell                     |
 
 ---
 
-## Flujo del programa
+## Program Flow
 
 ```
 main()
   |
-  +-- welcome()            --> banner ASCII
+  +-- welcome()            --> ASCII banner
   |
-  +-- askConfig()          --> scanner para filas, columnas, agentes, telefonos, muros
+  +-- askConfig()          --> scanner for rows, columns, agents, telephones, walls
   |
   +-- engine.start(config)
   |     |
-  |     +-- Board.reset()           --> singleton del tablero
-  |     +-- placeEntities()         --> coloca N, T, A, # en posiciones aleatorias sin solapamiento
+  |     +-- Board.reset()           --> board singleton
+  |     +-- placeEntities()         --> places N, T, A, # in random non-overlapping positions
   |     +-- return GameState
   |
   +-- autoSim()
         |
         +-- LOOP:
         |     |
-        |     +-- render()           --> limpia pantalla y dibuja tablero coloreado
-        |     +-- computeAutoDirection()  --> A* desde Neo al telefono mas cercano
+        |     +-- render()           --> clears screen and draws colored board
+        |     +-- computeAutoDirection()  --> A* from Neo to closest telephone
         |     |     +-- AStar.findPath()
         |     |     +-- return Direction
         |     |
         |     +-- processTurn(direction)
         |     |     |
-        |     |     +-- mover a Neo segun Direction
-        |     |     +-- si Neo pisa T --> NEO_WINS
-        |     |     +-- moveAgents()  --> executorService con N tareas (una por agente)
-        |     |     |     +-- moveSingleAgent()  --> BFS desde agente hacia Neo
+        |     |     +-- moves Neo according to Direction
+        |     |     +-- if Neo steps on T --> NEO_WINS
+        |     |     +-- moveAgents()  --> executorService with N tasks (one per agent)
+        |     |     |     +-- moveSingleAgent()  --> BFS from agent to Neo
         |     |     |     |     +-- BFS.findPath()
-        |     |     |     |     +-- si el destino es T o A --> no se mueve
-        |     |     |     |     +-- si pisa N --> captura
-        |     |     |     +-- si algun agente captura --> AGENTS_WIN
+        |     |     |     |     +-- if destination is T or A --> does not move
+        |     |     |     |     +-- if steps on N --> capture
+        |     |     |     +-- if any agent captures --> AGENTS_WIN
         |     |     |
         |     |     +-- turnCount++
         |     |     +-- return GameState
         |     |
-        |     +-- si status != PLAYING --> result() --> pregunta si repetir
+        |     +-- if status != PLAYING --> result() --> asks to repeat
         |     +-- sleep(400ms)
         |
-        +-- FIN
+        +-- END
 ```
 
 ---
 
-## Arquitectura del codigo
+## Code Architecture
 
 ```
 src/main/java/com/the/matrix/arsw/The_matrix_escape/
-├── TheMatrixEscapeApplication.java   --> main(), entrada/salida por consola, renderizado ANSI
+├── TheMatrixEscapeApplication.java   --> main(), console input/output, ANSI rendering
 ├── engine/
-│   └── GameEngine.java               --> orquestador: config, turnos, movimientos, concurrencia
+│   └── GameEngine.java               --> orchestrator: config, turns, movements, concurrency
 ├── model/
-│   ├── Board.java                    --> singleton del tablero, matriz char[][], metodos synchronized
-│   └── Position.java                 --> record inmutable (row, col) con Chebyshev y vecinos
+│   ├── Board.java                    --> board singleton, char[][] matrix, synchronized methods
+│   └── Position.java                 --> immutable record (row, col) with Chebyshev and neighbors
 └── pathfinding/
-    └── PathFinder.java               --> interface + AStar (Neo) + BFS (Agentes)
+    └── PathFinder.java               --> interface + AStar (Neo) + BFS (Agents)
 ```
 
 ### TheMatrixEscapeApplication
-- Punto de entrada. Pide configuracion por consola, inicia el engine y ejecuta el bucle automatico.
-- Usa codigos de escape ANSI para colorear el tablero en la terminal.
-- `render()` toma un snapshot del estado del juego (copia defensiva del tablero) y lo dibuja.
-- `autoSim()` cicla: render -> computeAutoDirection -> processTurn -> sleep(400ms).
+- Entry point. Asks for configuration via console, starts the engine, and runs the automatic simulation loop.
+- Uses ANSI escape codes to color the board in the terminal.
+- `render()` takes a snapshot of the game state (defensive copy of the board) and draws it.
+- `autoSim()` cycles: render -> computeAutoDirection -> processTurn -> sleep(400ms).
 
 ### GameEngine
-- **GameConfig**: record con parametros de la partida.
-- **GameState**: record con snapshot del tablero, estado, turno y modo.
+- **GameConfig**: record containing match parameters.
+- **GameState**: record with board snapshot, status, turn, and mode.
 - **GameStatus**: enum PLAYING, NEO_WINS, AGENTS_WIN.
-- **Direction**: enum con los 8 vectores de movimiento (ortogonales + diagonales).
-- `start()`: reinicia el board singleton, coloca entidades aleatoriamente.
-- `processTurn()`: mueve a Neo, verifica victoria, mueve agentes en paralelo, verifica derrota.
-- `computeAutoDirection()`: A* desde Neo hasta el telefono mas cercano, devuelve el primer paso.
-- `moveAgents()`: lanza un `Callable<Boolean>` por cada agente al `ExecutorService`.
-- `moveSingleAgent()`: sincronizado sobre el board, ejecuta BFS desde el agente hacia Neo, verifica que el destino no sea 'T' ni 'A' (otro agente).
-- `placeEntities()`: genera posiciones aleatorias sin solapamiento (N -> T -> A -> #).
+- **Direction**: enum with the 8 movement vectors (orthogonal + diagonal).
+- `start()`: resets the board singleton, places entities randomly.
+- `processTurn()`: moves Neo, checks victory, moves agents in parallel, checks defeat.
+- `computeAutoDirection()`: A* from Neo to the closest telephone, returns the first step.
+- `moveAgents()`: submits a `Callable<Boolean>` for each agent to the `ExecutorService`.
+- `moveSingleAgent()`: synchronized on the board, runs BFS from the agent toward Neo, verifies destination is neither 'T' nor 'A'.
+- `placeEntities()`: generates random non-overlapping positions (N -> T -> A -> #).
 
 ### Board (Singleton)
-- Matriz `char[][]` con '.' de fondo. Metodos synchronized para seguridad entre hilos.
-- `scan(target)`: recorre toda la matriz y devuelve posiciones del caracter dado.
-- `getNeighbors(pos)`: 8 vecinos validos (dentro del tablero, que no sean muro).
-- `getWalkableNeighbors(pos)`: igual pero excluye telefonos (para los agentes).
-- `cloneGrid()`: copia defensiva para el snapshot.
+- `char[][]` matrix with '.' background. Synchronized methods for thread safety.
+- `scan(target)`: scans the entire matrix and returns positions of the given character.
+- `getNeighbors(pos)`: 8 valid neighbors (inside the board, not a wall).
+- `getWalkableNeighbors(pos)`: same but excludes telephones (for agents).
+- `cloneGrid()`: defensive copy for the snapshot.
 
 ### Position (record)
-- `chebyshevDistance()`: `max(|dr|, |dc|)` para movimiento en 8 direcciones.
-- `getNeighbors()`: las 8 posiciones circundantes (sin validacion de bordes).
+- `chebyshevDistance()`: `max(|dr|, |dc|)` for 8-directional movement.
+- `getNeighbors()`: the 8 surrounding positions (without boundary validation).
 
 ### PathFinder (interface)
-- **AStar**: PriorityQueue ordenada por `f = g + h`. Heuristica Chebyshev. Usado por Neo.
-- **BFS**: Queue FIFO con Set de explorados. Usa `getWalkableNeighbors` (sin telefonos). Usado por Agentes.
-- `reconstructPath()`: reconstruye el camino desde predecesores usando LinkedList.
+- **AStar**: PriorityQueue ordered by `f = g + h`. Chebyshev heuristic. Used by Neo.
+- **BFS**: FIFO Queue with explored Set. Uses `getWalkableNeighbors` (no telephones). Used by Agents.
+- `reconstructPath()`: reconstructs the path from predecessors using LinkedList.
 
 ---
 
-## Concurrencia
+## Concurrency
 
-- Cada agente se ejecuta en un hilo separado via `Executors.newCachedThreadPool()`.
-- El acceso al tablero se protege con `synchronized` en cada metodo de Board y en el bloque critico de `moveSingleAgent()`.
-- Los agentes se mueven secuencialmente dentro del lock (uno tras otro), pero el calculo de rutas y la espera de futures es concurrente.
-- Al terminar la partida, el pool se cierra con `shutdownNow()`.
-
----
-
-## Prevencion de solapamiento de agentes
-
-En `GameEngine.moveSingleAgent()`, antes de mover un agente se verifica que la celda destino no contenga `'A'` (otro agente). Si esta ocupada, el agente simplemente no se mueve ese turno.
+- Each agent runs in a separate thread via `Executors.newCachedThreadPool()`.
+- Access to the board is protected with `synchronized` on every Board method and in the critical block of `moveSingleAgent()`.
+- Agents move sequentially within the lock (one after another), but path calculations and waiting for futures are concurrent.
+- When the match ends, the pool is shut down with `shutdownNow()`.
 
 ---
 
-## Algoritmos de busqueda
+## Agent Overlap Prevention
 
-| Algoritmo | Usado por | Caracteristica                     |
-|-----------|-----------|------------------------------------|
-| A*        | Neo       | Heuristica Chebyshev, 8 direcciones|
-| BFS       | Agentes   | Camino mas corto, sin heuristicas  |
-
-Ambos soportan movimiento en 8 direcciones y evitan muros. A* incluye telefonos como transitables; BFS los excluye.
+In `GameEngine.moveSingleAgent()`, before moving an agent, it is verified that the target cell does not contain `'A'` (another agent). If it is occupied, the agent simply does not move that turn.
 
 ---
 
-## Contexto del Proyecto
+## Search Algorithms
 
-### Descripcion General
+| Algorithm | Used by | Characteristics                    |
+|-----------|---------|------------------------------------|
+| A*        | Neo     | Chebyshev heuristic, 8 directions  |
+| BFS       | Agents  | Shortest path, no heuristics       |
 
-Es un juego de simulacion basado en el universo de The Matrix, implementado sobre un tablero bidimensional (matriz de N×M celdas de tamaño configurable). El juego modela una persecucion dentro de la simulacion: **Neo debe escapar hacia un telefono antes de ser capturado por los Agentes**.
+Both support 8-directional movement and avoid walls. A* treats telephones as walkable; BFS excludes them.
 
-### Entidades del Tablero
+---
 
-| Simbolo | Entidad | Rol |
+## Project Context
+
+### General Description
+
+A simulation game based on The Matrix universe, implemented on a two-dimensional board (matrix of configurable size N×M). The game models a chase inside the simulation: **Neo must escape to a telephone before being captured by the Agents**.
+
+### Board Entities
+
+| Symbol | Entity | Role |
 |---|---|---|
-| `N` | Neo | Jugador / protagonista |
-| `A` | Agente | Perseguidor autonomo (IA) |
-| `T` | Telefono | Portal de escape (objetivo) |
-| `#` | Muro | Obstaculo infranqueable |
+| `N` | Neo | Player / protagonist |
+| `A` | Agent | Autonomous pursuer (AI) |
+| `T` | Telephone | Escape portal (goal) |
+| `#` | Wall | Impassable obstacle |
 
-**Neo (`N`)** es el unico personaje controlado (ya sea por el jugador o por una IA defensiva). Su objetivo es alcanzar el telefono mas cercano sin ser capturado. Representa al hacker que intenta escapar de la simulacion.
+**Neo (`N`)** is the only controlled character (either by the player or by a defensive AI). His goal is to reach the closest telephone without being captured. He represents the hacker trying to escape the simulation.
 
-**Agentes (`A`)** son entidades autonomas controladas por el sistema. Pueden existir **uno o varios simultaneamente** en el tablero. Cada Agente opera de forma independiente mediante su propio hilo de ejecucion, y su unico objetivo es interceptar a Neo. Son la amenaza principal del juego.
+**Agents (`A`)** are autonomous entities controlled by the system. There can be **one or multiple agents** simultaneously on the board. Each Agent operates independently on its own execution thread, and their only goal is to intercept Neo. They represent the main threat of the game.
 
-**Telefonos (`T`)** son los puntos de salida del mundo virtual. Pueden existir **uno o varios** en el tablero. Neo debe llegar a cualquiera de ellos para ganar. Si hay multiples telefonos, el sistema (o Neo) debe identificar el mas accesible segun la situacion actual.
+**Telephones (`T`)** are the exit points from the virtual world. There can be **one or multiple telephones** on the board. Neo must reach any of them to win. If there are multiple telephones, the system (or Neo) must identify the most accessible one based on the current situation.
 
-**Muros (`#`)** son celdas bloqueadas que ninguna entidad puede atravesar. Definen la topografia del laberinto y condicionan las rutas posibles tanto para Neo como para los Agentes.
+**Walls (`#`)** are blocked cells that no entity can cross. They define the topography of the maze and constrain the possible routes for both Neo and the Agents.
 
-### Mecanica Central
+### Central Mechanics
 
-El juego es esencialmente una **carrera con obstaculos**: Neo intenta llegar al telefono mas cercano mientras los Agentes calculan rutas para interceptarlo. La partida termina en dos condiciones:
+The game is essentially an **obstacle race**: Neo attempts to reach the closest telephone while the Agents calculate routes to intercept him. The match ends under two conditions:
 
-- **Neo gana:** llega a una celda `T` antes de ser atrapado.
-- **Los Agentes ganan:** uno de ellos ocupa la misma celda que Neo.
+- **Neo wins:** reaches a `T` cell before being caught.
+- **Agents win:** one of them occupies the same cell as Neo.
 
-### Concurrencia y Manejo de Hilos
+### Concurrency and Thread Handling
 
-Este es el componente tecnico mas importante del proyecto. Cada Agente corre en su **propio hilo de ejecucion independiente**, lo que significa que varios Agentes pueden calcular y mover simultaneamente. Esto introduce desafios reales de programacion concurrente:
+This is the most important technical component of the project. Each Agent runs on its **own independent execution thread**, meaning multiple Agents can calculate and move simultaneously. This introduces real challenges of concurrent programming:
 
-- **Memoria compartida:** el tablero es un recurso compartido entre todos los hilos (Neo + Agentes). Se requieren mecanismos de sincronizacion (mutex, semaforos, locks) para evitar condiciones de carrera al leer/escribir posiciones.
-- **Coordinacion sin centralizacion:** los Agentes no se "comunican" entre si explicitamente, pero comparten el estado del tablero, lo que genera una persecucion distribuida naturalmente.
-- **Actualizacion del estado:** cada vez que un Agente o Neo se mueve, el tablero debe actualizarse de forma segura para que todos los hilos vean el estado correcto.
+- **Shared memory:** the board is a shared resource among all threads (Neo + Agents). Synchronization mechanisms (mutex, semaphores, locks) are required to avoid race conditions when reading/writing positions.
+- **Coordination without centralization:** Agents do not explicitly "communicate" with each other, but they share the state of the board, which naturally creates a distributed chase.
+- **State update:** every time an Agent or Neo moves, the board must be safely updated so all threads see the correct state.
 
-### Algoritmos de Busqueda
+### Search Algorithms
 
-Cada Agente usa un algoritmo de busqueda de caminos para perseguir a Neo. Las opciones viables son:
+Each Agent uses a pathfinding algorithm to chase Neo. The viable options are:
 
-- **BFS (Busqueda en Anchura):** garantiza el camino mas corto en grafos sin pesos. Simple y efectivo para tableros uniformes.
-- **Dijkstra:** util si en el futuro se anaden celdas con costos de movimiento distintos.
-- **A\* (A-estrella):** el mas eficiente para este escenario. Combina distancia recorrida con una heuristica (por ejemplo, distancia Manhattan hacia Neo), lo que lo hace mas inteligente y rapido que BFS en tableros grandes.
+- **BFS (Breadth-First Search):** guarantees the shortest path in unweighted graphs. Simple and effective for uniform boards.
+- **Dijkstra:** useful if in the future cells with different movement costs are added.
+- **A\*:** the most efficient for this scenario. It combines distance traveled with a heuristic (e.g., Chebyshev distance to Neo), making it smarter and faster than BFS on large boards.
 
-> Un detalle importante: como Neo se mueve, los Agentes deben **recalcular su ruta periodicamente**, no solo al inicio. Esto hace que el algoritmo deba ejecutarse de forma repetida y eficiente.
+> Important detail: as Neo moves, Agents must **recalculate their path periodically**, not just at the beginning. This requires the algorithm to execute repeatedly and efficiently.
 
-### Patrones de Diseno Aplicables
+### Applicable Design Patterns
 
-Dado que el proyecto involucra concurrencia, entidades autonomas y un estado compartido, algunos patrones relevantes son:
+Since the project involves concurrency, autonomous entities, and shared state, some relevant patterns are:
 
-- **Observer / Event-driven:** el tablero notifica a los hilos cuando el estado cambia (Neo se movio, un Agente llego a su destino, etc.).
-- **Strategy:** permite intercambiar el algoritmo de busqueda de cada Agente en tiempo de ejecucion (un Agente usa BFS, otro usa A\*, etc.).
-- **Singleton:** para garantizar que el tablero sea una unica instancia compartida.
-- **Thread Pool:** en lugar de crear un hilo nuevo por Agente cada turno, se puede mantener un pool de hilos reutilizables.
+- **Observer / Event-driven:** the board notifies threads when the state changes (Neo moved, an Agent reached its destination, etc.).
+- **Strategy:** allows swapping the pathfinding algorithm of each Agent at runtime (one Agent uses BFS, another uses A*, etc.).
+- **Singleton:** to guarantee the board is a single shared instance.
+- **Thread Pool:** instead of spawning a new thread per Agent each turn, a pool of reusable threads can be maintained.
 
-### Configurabilidad del Sistema
+### System Configurability
 
-El tablero y las reglas deben ser configurables sin recompilar el codigo:
+The board and rules must be configurable without recompiling the code:
 
-- Tamano del tablero (N × M)
-- Numero de Agentes
-- Numero de telefonos
+- Board size (N × M)
+- Number of Agents
+- Number of telephones
