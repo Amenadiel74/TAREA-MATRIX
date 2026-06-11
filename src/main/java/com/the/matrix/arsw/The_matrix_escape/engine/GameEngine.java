@@ -1,26 +1,36 @@
 package com.the.matrix.arsw.The_matrix_escape.engine;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import com.the.matrix.arsw.The_matrix_escape.model.Board;
 import com.the.matrix.arsw.The_matrix_escape.model.Position;
 import com.the.matrix.arsw.The_matrix_escape.pathfinding.PathFinder;
 
-import java.util.*;
-import java.util.concurrent.*;
-
 /**
- * Motor del juego "The Matrix Escape".
- * Orquesta la logica del juego: colocacion inicial de entidades en el tablero,
- * procesamiento de turnos (movimiento de Neo y agentes en paralelo),
- * deteccion de victoria/derrota y computo automatico de direcciones.
+ * Motor del juego "The Matrix Escape". Orquesta la logica del juego: colocacion
+ * inicial de entidades en el tablero, procesamiento de turnos (movimiento de
+ * Neo y agentes en paralelo), deteccion de victoria/derrota y computo
+ * automatico de direcciones.
  * <p>
  * Los agentes se mueven en un pool de hilos (ExecutorService) para simular
  * movimiento simultaneo, mientras Neo se mueve en el hilo principal.
  */
 public class GameEngine {
 
-    public record GameConfig(int rows, int cols, int agentCount, int phoneCount, int wallCount, String mode) {}
+    public record GameConfig(int rows, int cols, int agentCount, int phoneCount, int wallCount, String mode) {
 
-    public enum GameStatus { PLAYING, NEO_WINS, AGENTS_WIN }
+    }
+
+    public enum GameStatus {
+        PLAYING, NEO_WINS, AGENTS_WIN
+    }
 
     public enum Direction {
         UP(-1, 0), DOWN(1, 0), LEFT(0, -1), RIGHT(0, 1),
@@ -35,7 +45,9 @@ public class GameEngine {
         }
     }
 
-    public record GameState(char[][] board, String status, int turn, String mode) {}
+    public record GameState(char[][] board, String status, int turn, String mode) {
+
+    }
 
     private Board board;
     private GameConfig config;
@@ -46,8 +58,8 @@ public class GameEngine {
     private int turnCount = 0;
 
     /**
-     * Inicia una nueva partida con la configuracion dada.
-     * Si el pool de hilos fue cerrado en una partida anterior, lo recrea.
+     * Inicia una nueva partida con la configuracion dada. Si el pool de hilos
+     * fue cerrado en una partida anterior, lo recrea.
      */
     public synchronized GameState start(GameConfig cfg) {
         if (agentThreadPool.isShutdown()) {
@@ -64,26 +76,31 @@ public class GameEngine {
 
     /**
      * Procesa un turno completo:
-     * <ol>
-     *   <li>Mueve a Neo en la direccion indicada</li>
-     *   <li>Verifica si Neo alcanzo un telefono (victoria)</li>
-     *   <li>Mueve a todos los agentes en paralelo hacia Neo</li>
-     *   <li>Verifica si algun agente atrapo a Neo (derrota)</li>
-     *   <li>Incrementa el contador de turnos</li>
-     * </ol>
+     *
+     * - Mueve a Neo en la direccion indicada - Verifica si Neo alcanzo un
+     * telefono (victoria) - Mueve a todos los agentes en paralelo hacia Neo -
+     * Verifica si algun agente atrapo a Neo (derrota) - Incrementa el contador
+     * de turnos
+     *
      */
     public synchronized GameState processTurn(Direction direction) {
-        if (gameStatus != GameStatus.PLAYING) return getState();
+        if (gameStatus != GameStatus.PLAYING) {
+            return getState();
+        }
 
         Position neoPosition = board.findNeoPosition();
-        if (neoPosition == null) return getState();
+        if (neoPosition == null) {
+            return getState();
+        }
 
         Position nextNeoPosition = new Position(
-            neoPosition.row() + direction.deltaRow,
-            neoPosition.col() + direction.deltaCol
+                neoPosition.row() + direction.deltaRow,
+                neoPosition.col() + direction.deltaCol
         );
 
-        if (!board.isValidPosition(nextNeoPosition)) return getState();
+        if (!board.isValidPosition(nextNeoPosition)) {
+            return getState();
+        }
 
         boolean phoneReached = board.getCell(nextNeoPosition.row(), nextNeoPosition.col()) == 'T';
 
@@ -107,47 +124,57 @@ public class GameEngine {
     }
 
     /**
-     * Calcula automaticamente la direccion optima para que Neo
-     * se acerque al telefono mas cercano usando el algoritmo A*.
+     * Calcula automaticamente la direccion optima para que Neo se acerque al
+     * telefono mas cercano usando el algoritmo A*.
      */
     public Direction computeAutoDirection() {
         Position neoPosition = board.findNeoPosition();
-        if (neoPosition == null) return null;
+        if (neoPosition == null) {
+            return null;
+        }
 
         List<Position> phones = board.findPhonePositions();
-        if (phones.isEmpty()) return null;
+        if (phones.isEmpty()) {
+            return null;
+        }
 
         Position closestPhone = phones.stream()
-            .min(Comparator.comparingInt(p -> neoPosition.chebyshevDistance(p)))
-            .orElse(null);
-        if (closestPhone == null) return null;
+                .min(Comparator.comparingInt(p -> neoPosition.chebyshevDistance(p)))
+                .orElse(null);
+        if (closestPhone == null) {
+            return null;
+        }
 
         List<Position> path = autoPathfinder.findPath(board, neoPosition, closestPhone);
-        if (path.size() <= 1) return null;
+        if (path.size() <= 1) {
+            return null;
+        }
 
         int deltaRow = path.get(1).row() - neoPosition.row();
         int deltaCol = path.get(1).col() - neoPosition.col();
 
         return Arrays.stream(Direction.values())
-            .filter(d -> d.deltaRow == deltaRow && d.deltaCol == deltaCol)
-            .findFirst()
-            .orElse(null);
+                .filter(d -> d.deltaRow == deltaRow && d.deltaCol == deltaCol)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
-     * Construye el snapshot actual del estado del juego.
-     * La matriz del tablero se entrega como copia defensiva.
+     * Construye el snapshot actual del estado del juego. La matriz del tablero
+     * se entrega como copia defensiva.
      */
     public GameState getState() {
         return new GameState(
-            board.cloneGrid(),
-            gameStatus.name(),
-            turnCount,
-            config != null ? config.mode() : "NONE"
+                board.cloneGrid(),
+                gameStatus.name(),
+                turnCount,
+                config != null ? config.mode() : "NONE"
         );
     }
 
-    public GameStatus getStatus() { return gameStatus; }
+    public GameStatus getStatus() {
+        return gameStatus;
+    }
 
     private void placeEntities() {
         Random random = new Random();
@@ -175,8 +202,8 @@ public class GameEngine {
      */
     private boolean moveAgents() {
         List<Future<Boolean>> agentResults = board.findAgentPositions().stream()
-            .map(agentPosition -> agentThreadPool.submit(() -> moveSingleAgent(agentPosition)))
-            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+                .map(agentPosition -> agentThreadPool.submit(() -> moveSingleAgent(agentPosition)))
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         try {
             for (Future<Boolean> agentResult : agentResults) {
@@ -191,13 +218,15 @@ public class GameEngine {
     }
 
     /**
-     * Mueve un agente individual un paso hacia Neo usando BFS.
-     * Se ejecuta dentro del thread pool de agentes.
+     * Mueve un agente individual un paso hacia Neo usando BFS. Se ejecuta
+     * dentro del thread pool de agentes.
      */
     private boolean moveSingleAgent(Position agentPosition) {
         synchronized (board) {
             Position currentNeoPosition = board.findNeoPosition();
-            if (currentNeoPosition == null) return false;
+            if (currentNeoPosition == null) {
+                return false;
+            }
 
             List<Position> pathToNeo = agentPathfinder.findPath(board, agentPosition, currentNeoPosition);
 
@@ -205,7 +234,9 @@ public class GameEngine {
                 Position nextAgentStep = pathToNeo.get(1);
 
                 char nextCell = board.getCell(nextAgentStep.row(), nextAgentStep.col());
-                if (nextCell == 'T' || nextCell == 'A') return false;
+                if (nextCell == 'T' || nextCell == 'A') {
+                    return false;
+                }
 
                 board.setCell(agentPosition.row(), agentPosition.col(), '.');
                 board.setCell(nextAgentStep.row(), nextAgentStep.col(), 'A');

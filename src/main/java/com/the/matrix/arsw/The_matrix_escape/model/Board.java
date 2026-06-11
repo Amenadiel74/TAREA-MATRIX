@@ -8,16 +8,15 @@ import java.util.stream.IntStream;
  * Tablero del juego "The Matrix Escape".
  * Implementa el patron Singleton: solo existe una unica instancia del tablero
  * en toda la aplicacion.
- * <p>
  * Internamente guarda una matriz de caracteres (char[][]) donde cada celda
  * representa un elemento del escenario:
- * <ul>
- *   <li>'.' espacio vacio</li>
- *   <li>'N' Neo</li>
- *   <li>'A' Agente</li>
- *   <li>'T' Telefono (meta de Neo)</li>
- *   <li>'#' Muro (intransitable)</li>
- * </ul>
+ * 
+ *   - '.' espacio vacio
+ *   - 'N' Neo
+ *   - 'A' Agente
+ *   - 'T' Telefono (meta de Neo)
+ *   - '#' Muro (intransitable)
+ * 
  * Todos los metodos que leen o escriben la matriz son synchronized para
  * garantizar seguridad entre hilos (Neo se mueve en el hilo principal,
  * los Agentes en hilos separados).
