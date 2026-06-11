@@ -9,16 +9,13 @@ if %errorlevel% neq 0 (
 )
 
 echo Running Matrix Escape...
-mvn -version >nul 2>&1
-if %errorlevel% eq 0 (
-    call mvn compile exec:java "-Dexec.mainClass=com.the.matrix.arsw.The_matrix_escape.TheMatrixEscapeApplication"
+call mvn -version >nul 2>&1
+if %errorlevel%==0 (
+    cmd /c "mvn compile exec:java -Dexec.mainClass=com.the.matrix.arsw.The_matrix_escape.TheMatrixEscapeApplication"
 ) else (
-    call mvnw.cmd compile exec:java "-Dexec.mainClass=com.the.matrix.arsw.The_matrix_escape.TheMatrixEscapeApplication"
+    cmd /c "mvnw.cmd compile exec:java -Dexec.mainClass=com.the.matrix.arsw.The_matrix_escape.TheMatrixEscapeApplication"
 )
 
-if %errorlevel% neq 0 (
-    echo [ERROR] Execution failed. Check the output above.
-)
 pause
 
 

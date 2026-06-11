@@ -62,11 +62,11 @@ public class TheMatrixEscapeApplication {
     private static GameConfig askConfig() {
         System.out.print(CLEAR_SCREEN + BOLD + YELLOW + "INSTRUMENTACION" + RESET + "\n");
         return new GameConfig(
-            readInt("Filas (8): ", 8),
-            readInt("Columnas (8): ", 8),
-            readInt("Agentes (2): ", 2),
-            readInt("Telefonos (1): ", 1),
-            readInt("Muros (10): ", 10),
+            readInt("Filas: ", 8),
+            readInt("Columnas: ", 8),
+            readInt("Agentes: ", 2),
+            readInt("Telefonos: ", 1),
+            readInt("Muros: ", 10),
             "SIMULATION"
         );
     }
